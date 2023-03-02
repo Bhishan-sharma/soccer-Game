@@ -13,11 +13,11 @@ screen_height = 399
 screen = pygame.display.set_mode((screen_width,screen_height))
 Title = pygame.display.set_caption("Ping Pong")
 
-background_image = pygame.image.load("field.jpg")
-paddle_1_img = pygame.image.load("paddle_1.jpg")
-paddle_2_img = pygame.image.load("paddle_2.jpg")
-ball_img = pygame.image.load("football.png")
-sound = pygame.mixer.Sound("ball-hits-paddle.mp3")
+background_image = pygame.image.load("assets/field.jpg")
+paddle_1_img = pygame.image.load("assets/paddle_1.jpg")
+paddle_2_img = pygame.image.load("assets/paddle_2.jpg")
+ball_img = pygame.image.load("assets/football.png")
+sound = pygame.mixer.Sound("sound/ball-hits-paddle.mp3")
 
 angle = 90
 paddle_1_img = pygame.transform.rotate(paddle_1_img, angle)
