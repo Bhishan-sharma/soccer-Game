@@ -1,3 +1,4 @@
+import sys
 import pygame
 
 pygame.init()
@@ -86,12 +87,13 @@ def drawScreen():
     screen.fill((234,218,184))
     screen.blit(background_image, (0, 0))
 
-run = True
-while run:
+
+while True:
     clock.tick(FPS)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            run = False
+            pygame.quit()
+            sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_w:
                 movUp("w")
@@ -134,5 +136,3 @@ while run:
     drawPaddles()
     drawBall()
     pygame.display.update()
-
-pygame.quit()
