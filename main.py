@@ -3,136 +3,157 @@ import pygame
 
 pygame.init()
 
-FPS = 60
 clock = pygame.time.Clock()
-
-stroke = 0
-
 screen_width = 600
 screen_height = 399
-
 screen = pygame.display.set_mode((screen_width,screen_height))
 Title = pygame.display.set_caption("Ping Pong")
-
 background_image = pygame.image.load("assets/field.jpg")
-paddle_1_img = pygame.image.load("assets/paddle_1.jpg")
-paddle_2_img = pygame.image.load("assets/paddle_2.jpg")
-ball_img = pygame.image.load("assets/football.png")
-sound = pygame.mixer.Sound("sound/ball-hits-paddle.mp3")
+game_font = pygame.font.Font('Font/PoetsenOne-Regular.ttf',25)
 
-angle = 90
-paddle_1_img = pygame.transform.rotate(paddle_1_img, angle)
-paddle_2_img = pygame.transform.rotate(paddle_2_img, angle)
+class BALL:
+    def __init__(self):
+        self.x = screen_width // 2
+        self.y = screen_height // 2
+        self.ball_speed_x = 3
+        self.ball_speed_y = 3
+        self.paddle_hit = 0
+        self.ball_img = pygame.image.load("assets/football.png")
+    
+    def draw_ball(self):
+        self.ball = pygame.Rect(screen_width//2,screen_height//2,20,20)
+        screen.blit(self.ball_img,(self.x-10,self.y-10))
 
-font = pygame.font.Font(None, 36)
+    def move_ball(self):
+        self.x += self.ball_speed_x
+        self.y += self.ball_speed_y
 
-scoreA = 0
-scoreB = 0
-player = ""
+class PADDLE:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.paddle_width = 23
+        self.paddle_height = 150
+        self.direction = 0
+        self.speed = 25
+        self.score = 0
+        self.paddle_img = pygame.image.load("assets/paddle_1.jpg")
+    
+    def draw_paddle(self):
+        self.paddle_rect = pygame.Rect(self.x ,self.y ,self.paddle_width ,self.paddle_height)
+        screen.blit(self.paddle_img, self.paddle_rect)
+    
+    def rotate_img(self):
+        self.angle = 90
+        self.paddle_img = pygame.transform.rotate(self.paddle_img, self.angle)
 
-text = font.render("ScoreA: {} || ScoreB: {}".format(scoreA,scoreB), True,(255, 255, 255))
-resultText = font.render("PLAYER {} WON".format(player),True,(0,0,0))
+    def move_paddle(self):
+        self.y += self.direction
+        self.direction = 0
 
-paddle_width = 23
-paddle_height = 150
+class MAIN:
+    def __init__(self):
+        self.paddle_1 = PADDLE()
+        self.paddle_2 = PADDLE()
+        self.ball = BALL()
+        self.sound = pygame.mixer.Sound("sound/ball-hits-paddle.mp3")
+        self.place_arguements()
 
-paddle_1_x = 0
-paddle_1_y = screen_height//2 - paddle_height
+    def place_arguements(self):
+        self.paddle_1.x = 0
+        self.paddle_1.y = screen_height//2 - self.paddle_1.paddle_height
+        self.paddle_1.paddle_img = pygame.image.load("assets/paddle_1.jpg")
+        self.paddle_1.rotate_img()
 
-paddle_2_x = 600 - paddle_width
-paddle_2_y = screen_height//2 - paddle_height
+        self.paddle_2.x = 602 - self.paddle_2.paddle_width
+        self.paddle_2.y = screen_height//2 - self.paddle_2.paddle_height
+        self.paddle_2.paddle_img = pygame.image.load("assets/paddle_2.jpg")
+        self.paddle_2.rotate_img()
 
-paddle_1 = pygame.Rect(paddle_1_x ,paddle_1_y ,paddle_width ,paddle_height)
-paddle_2 = pygame.Rect(paddle_2_x ,paddle_2_y ,paddle_width ,paddle_height)
-ball = pygame.Rect(screen_width//2,screen_height//2,20,20)
+    def update(self):
+        self.draw_objects()
+        self.move_objects()
+        self.check_paddle_collision()
+        self.scoreInc()
+        self.check_sideWall_fail()
+        self.draw_result()
 
-ball_speed_x = 3
-ball_speed_y = 3
+    def draw_objects(self):
+        self.paddle_1.draw_paddle()
+        self.paddle_2.draw_paddle()
+        self.ball.draw_ball()
 
-def movUp(a):
-    if a == "w":
-        paddle_1.y -= 40
-    if a == "up":
-        paddle_2.y -= 40
+    def move_objects(self):
+        self.paddle_1.move_paddle()
+        self.paddle_2.move_paddle()
+        self.ball.move_ball()
 
-def movDown(a):
-    if a == "s":
-        paddle_1.y += 40
-    if a == "Down":
-        paddle_2.y += 40
+    def check_paddle_collision(self):
+        horizon_p1 = self.paddle_1.paddle_width
+        low_limit_p1 = self.paddle_1.y
+        max_limit_p1 = self.paddle_1.paddle_height + low_limit_p1
+        
+        horizon_p2 = self.paddle_2.x - self.paddle_2.paddle_width
+        low_limit_p2 = self.paddle_2.y
+        max_limit_p2 = self.paddle_2.paddle_height + low_limit_p2
 
-def result():
-    screen.blit(resultText, (screen_width // 2 - resultText.get_width() // 2,screen_height // 2 - resultText.get_height() // 2))
-    run = False
+        if (self.ball.x <= horizon_p1) and (low_limit_p1 <= self.ball.y <= max_limit_p1):
+            self.sound.play()
+            self.ball.ball_speed_x = -1*self.ball.ball_speed_x
+            self.ball.y += 2
+            self.ball.paddle_hit += 1
+        elif (self.ball.x >= horizon_p2) and (low_limit_p2 <= self.ball.y <= max_limit_p2):
+            self.sound.play()
+            self.ball.ball_speed_x = -1*self.ball.ball_speed_x
+            self.ball.y += 2
+            self.ball.paddle_hit += 1
 
-def scoreBoard():
-    text = font.render("ScoreA: {} || ScoreB: {}".format(scoreA,scoreB), True,(255, 255, 255))
-    screen.blit(text, (screen_width // 2 - text.get_width() // 2,10))
+    def check_sideWall_fail(self):
+        if self.ball.y <= 0 or self.ball.y >= screen_height:
+            self.ball.ball_speed_y = -self.ball.ball_speed_y
+        elif (self.ball.x >= screen_width or self.ball.x <= 0):
+            self.ball.ball_speed_x = -self.ball.ball_speed_x
 
-def drawPaddles():
-    pygame.draw.rect(screen,(0,0,0),paddle_1)
-    pygame.draw.rect(screen,(0,0,0),paddle_2)
-    screen.blit(paddle_1_img, paddle_1)
-    screen.blit(paddle_2_img, paddle_2)
+    def scoreInc(self):
+        if self.ball.paddle_hit != 0 and self.ball.x >= screen_width:
+            self.paddle_1.score += 1
+            self.ball.x = screen_width//2
+            self.ball.y = screen_height//2
+        elif self.ball.paddle_hit != 0 and self.ball.x <= (self.paddle_1.paddle_width//2):
+            self.paddle_2.score += 1
+            self.ball.x = screen_width//2
+            self.ball.y = screen_height//2
 
-def drawBall():
-    pygame.draw.ellipse(screen,(45,30,60),ball)
-    screen.blit(ball_img,(ball.x-10,ball.y-10))
+    def draw_result(self):
+        score_text = " SCORE A : "+str(self.paddle_1.score) + " || " +"SCORE B : " +str(self.paddle_2.score) +" "
+        text_surface = game_font.render(score_text, True, (0, 0, 0))
+        text_rect = text_surface.get_rect()
 
-def ballMove():
-    ball.x += ball_speed_x
-    ball.y += ball_speed_y
+        bg_surface = pygame.Surface(text_rect.size)
+        bg_surface.fill((115,209,61))
+        bg_surface.blit(text_surface, (0, 0))
+        bg_rect = bg_surface.get_rect()
+        bg_rect.center = (screen_width//2, 30)
+        screen.blit(bg_surface, (bg_rect.centerx - bg_rect.width // 2, bg_rect.centery - bg_rect.height // 2))
 
-def drawScreen():
+main = MAIN()
+while True:
     screen.fill((234,218,184))
     screen.blit(background_image, (0, 0))
-
-
-while True:
-    clock.tick(FPS)
+    clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_w:
-                movUp("w")
+                main.paddle_1.direction = -1*main.paddle_1.speed
             if event.key == pygame.K_s:
-                movDown("s")
+                main.paddle_1.direction = 1*main.paddle_1.speed
             if event.key == pygame.K_UP:
-                movUp("up")
+                main.paddle_2.direction = -1*main.paddle_2.speed
             if event.key == pygame.K_DOWN:
-                movDown("Down")
+                main.paddle_2.direction = 1*main.paddle_2.speed
 
-    if ball.colliderect(paddle_1) or ball.colliderect(paddle_2):
-        sound.play()
-        stroke += 1
-        ball_speed_x = -ball_speed_x
-        ball.y += 2
-
-    if ball.x >= screen_width and stroke > 0:
-        scoreA += 1
-        ball.x = screen_width//2
-        ball.y = screen_height//2
-    elif ball.x <= 10 and stroke > 0:
-        scoreB += 1
-        ball.x = screen_width//2
-        ball.y = screen_height//2
-    elif ball.y <= 0 or ball.y >= screen_height:
-        ball_speed_y = -ball_speed_y
-    elif stroke == 0 and (ball.x >= screen_width or ball.x <= 0):
-        ball_speed_x = -ball_speed_x
-
-    if scoreA == 10:
-        player = "A"
-        result()
-    elif scoreB == 10:
-        player = "B"
-        result()
-
-    ballMove()
-    drawScreen()
-    scoreBoard()
-    drawPaddles()
-    drawBall()
+    main.update()
     pygame.display.update()
